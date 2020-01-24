@@ -8,18 +8,26 @@
 
 const int C_max_len = 100;
 
+const int C_max_char = 256;  // 256 = 2 ** 8
+
 //=============================================================================
 
 struct node_t
 {
-    char *data;
+    char letter;
     node_t *left;
     node_t *right;
 };
 
 //=============================================================================
 
-int *Find_Frequency (const char *text);
+int Initialization_And_Make_Arrays (int *arr_of_frequency, unsigned char *letters);
+
+int Find_Frequency (int *arr_of_frequency, const char *text);
+
+void Print (int *arr_of_frequency);
+
+//-----------------------------------------------------------------------------
 
 void Qsort (int *arr, int left, int right, unsigned char *letters);
 
@@ -27,50 +35,71 @@ void My_Swap (int *arr, const int left, const int right, unsigned char *letters)
 
 int Sort_For_Part (int *arr, int left, int right, int mid, unsigned char *letters);
 
+//-----------------------------------------------------------------------------
+
+node_t *Create_Node (const char letter);
+
+node_t *Make_Tree (int *arr_of_frequncy, unsigned char *letters, const int cnt_of_all_letters);
+
+void Sort_After_Union (int *arr_of_frequncy, const int index);
+
 //=============================================================================
 
 int main ()
 {
-    char *text = (char *) calloc (C_max_len, sizeof (char));
+    int *arr_of_frequency = (int *) calloc (C_max_char, sizeof (int));
+    unsigned char *letters = (unsigned char *) calloc (C_max_char, sizeof (unsigned char));
+    int cnt_of_all_letters = Initialization_And_Make_Arrays (arr_of_frequency, letters);
 
-    scanf ("%s", text);
+    Qsort (arr_of_frequency, 0, C_max_char - 1, letters);
 
-    int *arr_of_frequency = Find_Frequency (text);
-
-    unsigned char *letters = (unsigned char *) calloc (256, sizeof (unsigned char));
-    for (int i = 0; i < 256; i++) letters[i] = i;
-
-    Qsort (arr_of_frequency, 0, 255, letters);
-
-    for (int i = 0; i < 256; i++)
-    {
-        printf ("[%03d]{%c} = %d", i, letters[i], arr_of_frequency[i]);
-
-        if (arr_of_frequency[i] != 0)
-        {
-            printf ("  NOT ZERO!!!");
-        }
-
-        printf ("\n");
-    }
+    Make_Tree (arr_of_frequency, letters, cnt_of_all_letters);
 
     return 0;
 }
 
 //=============================================================================
 
-int *Find_Frequency (const char *text)
+int Initialization_And_Make_Arrays (int *arr_of_frequency, unsigned char *letters)
 {
-    int *res = (int *) calloc (256, sizeof (int));  // 256 = 2 ** 8
+    char *text = (char *) calloc (C_max_len, sizeof (char));
+    scanf ("%s", text);
+
+    for (int i = 0; i < C_max_char; i++) letters[i] = i;
+
+    return Find_Frequency (arr_of_frequency, text);
+}
+
+//=============================================================================
+
+int Find_Frequency (int *arr_of_frequency, const char *text)
+{
+    int cnt_of_all_letters = 0;
 
     for (int i = 0; i < strlen (text); i++)
     {
-        res[text[i]]++;
-
-        printf ("text[%0.2d] = %c\n", i, text[i]);
+        arr_of_frequency[text[i]]++;
+        cnt_of_all_letters++;
+//        printf ("text[%0.2d] = %c\n", i, text[i]);
     }
 
-    return res;
+    return cnt_of_all_letters;
+}
+
+//=============================================================================
+
+void Print (int *arr_of_frequency)
+{
+    for (int i = 0; i < C_max_char; i++)
+    {
+        if (arr_of_frequency[i] != 0)
+        {
+            printf ("%d ", arr_of_frequency[i]);
+        }
+    }
+
+    printf ("\n");
+    printf ("========================================\n");
 }
 
 //=============================================================================
@@ -101,8 +130,6 @@ void Qsort (int *arr, int left, int right, unsigned char *letters)
 
 void My_Swap (int *arr, const int left, const int right, unsigned char *letters)
 {
-//    printf ("LEFT = [%d], RIGHT = [%d]\n", left, right);
-//    printf ("1:Arr[left] = %d, Arr[right] = %d\n\n", arr[left], arr[right]);
     int helper1 = arr[left];
     arr[left]   = arr[right];
     arr[right]  = helper1;
@@ -110,8 +137,6 @@ void My_Swap (int *arr, const int left, const int right, unsigned char *letters)
     unsigned char helper2 = letters[left];
     letters[left]  = letters[right];
     letters[right] = helper2;
-
-//    printf ("2:Arr[left] = %d, Arr[right] = %d\n", arr[left], arr[right]);
 }
 
 //=============================================================================
@@ -153,12 +178,67 @@ int Sort_For_Part (int *arr, int left, int right, int mid, unsigned char *letter
                 else if (arr[right] == arr[res])
                     res = left;
 
-//                printf ("1:Arr[left] = %d, Arr[right] = %d\n", arr[left], arr[right]);
                 My_Swap (arr, left, right, letters);
-//                printf ("2:Arr[left] = %d, Arr[right] = %d\n", arr[left], arr[right]);
             }
         }
     }
 
     return res;
+}
+
+//=============================================================================
+
+node_t *Create_Node (const char letter)
+{
+    node_t* node = (node_t *) calloc (1, sizeof (node_t) + 2);
+
+    node->letter = letter;
+    node->left  = nullptr;
+    node->right = nullptr;
+
+    return node;
+}
+
+//=============================================================================
+
+node_t *Make_Tree (int *arr_of_frequncy, unsigned char *letters, const int cnt_of_all_letters)
+{
+    node_t *node1 = Create_Node (arr_of_frequncy[0]);
+
+    for (int i = 1; i < C_max_char; i++)
+    {
+        node_t *node2 = Create_Node ('\0');
+
+        node2->left = node1;
+        node2->right = Create_Node (arr_of_frequncy[i]);
+
+        node1 = node2;
+
+        arr_of_frequncy[i] += arr_of_frequncy[i - 1];
+        arr_of_frequncy[i - 1] = 0;  // for beautiful dump (not necessarily)
+
+        Sort_After_Union (arr_of_frequncy, i);
+
+//        Print (arr_of_frequncy);
+    }
+
+    return node;
+}
+
+//=============================================================================
+
+void Sort_After_Union (int *arr_of_frequncy, const int index)
+{
+    int val = arr_of_frequncy[index];
+
+    for (int i = index + 1; i < C_max_char; i++)
+    {
+        if (val > arr_of_frequncy[i])
+        {
+            int helper = arr_of_frequncy[i - 1];
+            arr_of_frequncy[i - 1] = arr_of_frequncy[i];
+            arr_of_frequncy[i] = helper;
+        }
+        else return;
+    }
 }
