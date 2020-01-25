@@ -14,7 +14,8 @@ const int C_max_char = 256;  // 256 = 2 ** 8
 
 struct node_t
 {
-    char letter;
+    char data;
+    int freq;  // frequncy
     node_t *left;
     node_t *right;
 };
@@ -29,6 +30,14 @@ void Print (int *arr_of_frequency);
 
 //-----------------------------------------------------------------------------
 
+void Dump_Dot (node_t* node);
+
+void Dump_Dot_Labels (node_t* node, FILE *fout);
+
+void Dump_Dot_Links (node_t* node, FILE *fout);
+
+//-----------------------------------------------------------------------------
+
 void Qsort (int *arr, int left, int right, unsigned char *letters);
 
 void My_Swap (int *arr, const int left, const int right, unsigned char *letters);
@@ -37,11 +46,11 @@ int Sort_For_Part (int *arr, int left, int right, int mid, unsigned char *letter
 
 //-----------------------------------------------------------------------------
 
-node_t *Create_Node (const char letter);
+node_t *Create_Node (const char letters, const int frequncy);
 
 node_t *Make_Tree (int *arr_of_frequncy, unsigned char *letters, const int cnt_of_all_letters);
 
-void Sort_After_Union (int *arr_of_frequncy, const int index);
+void Sort_After_Union (node_t **helper_arr_of_nodes, unsigned char *letters, const int index);
 
 //=============================================================================
 
@@ -53,7 +62,8 @@ int main ()
 
     Qsort (arr_of_frequency, 0, C_max_char - 1, letters);
 
-    Make_Tree (arr_of_frequency, letters, cnt_of_all_letters);
+    node_t *node = Make_Tree (arr_of_frequency, letters, cnt_of_all_letters);
+    Dump_Dot (node);
 
     return 0;
 }
@@ -80,7 +90,7 @@ int Find_Frequency (int *arr_of_frequency, const char *text)
     {
         arr_of_frequency[text[i]]++;
         cnt_of_all_letters++;
-//        printf ("text[%0.2d] = %c\n", i, text[i]);
+        printf ("text[%0.2d] = %c\n", i, text[i]);
     }
 
     return cnt_of_all_letters;
@@ -100,6 +110,60 @@ void Print (int *arr_of_frequency)
 
     printf ("\n");
     printf ("========================================\n");
+}
+
+//=============================================================================
+
+void Dump_Dot (node_t* node)
+{
+    FILE *fout = fopen ("DOT", "w");
+
+    fprintf (fout, "digraph\n");
+    fprintf (fout, "{\n");
+    fprintf (fout, "\"%p\" [label=\"%c\"]\n", node, node->data);
+
+    Dump_Dot_Labels (node, fout);
+    Dump_Dot_Links  (node, fout);
+
+    fprintf (fout, "}");
+
+    fclose (fout);
+}
+
+//-----------------------------------------------------------------------------
+
+void Dump_Dot_Labels (node_t* node, FILE *fout)
+{
+    if (node->left)
+    {
+        fprintf (fout, "\"%p\" [label=\"%c\"]\n", node->left, (node->left)->data);
+
+        Dump_Dot_Labels (node->left, fout);
+    }
+
+    if (node->right)
+    {
+        fprintf (fout, "\"%p\" [label=\"%c\"]\n", node->right, (node->right)->data);
+
+        Dump_Dot_Labels (node->right, fout);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void Dump_Dot_Links (node_t* node, FILE *fout)
+{
+    if (node->left)
+    {
+        fprintf (fout, "\"%p\"->\"%p\";\n", node, node->left);
+        Dump_Dot_Links (node->left, fout);
+    }
+
+    if (node->right)
+    {
+        fprintf (fout, "\"%p\"->\"%p\";\n", node, node->right);
+        Dump_Dot_Links (node->right, fout);
+    }
 }
 
 //=============================================================================
@@ -188,11 +252,12 @@ int Sort_For_Part (int *arr, int left, int right, int mid, unsigned char *letter
 
 //=============================================================================
 
-node_t *Create_Node (const char letter)
+node_t *Create_Node (const char letter, const int frequncy)
 {
     node_t* node = (node_t *) calloc (1, sizeof (node_t) + 2);
 
-    node->letter = letter;
+    node->data = letter;
+    node->freq = frequncy;
     node->left  = nullptr;
     node->right = nullptr;
 
@@ -203,41 +268,51 @@ node_t *Create_Node (const char letter)
 
 node_t *Make_Tree (int *arr_of_frequncy, unsigned char *letters, const int cnt_of_all_letters)
 {
-    node_t *node1 = Create_Node (arr_of_frequncy[0]);
+    int start = -1;
+    while (arr_of_frequncy[++start] == 0);
 
-    for (int i = 1; i < C_max_char; i++)
+    node_t **helper_arr_of_nodes = (node_t **) calloc (C_max_char, sizeof (helper_arr_of_nodes[0]));
+    for (int i = 0; i < C_max_char; i++)
     {
-        node_t *node2 = Create_Node ('\0');
-
-        node2->left = node1;
-        node2->right = Create_Node (arr_of_frequncy[i]);
-
-        node1 = node2;
-
-        arr_of_frequncy[i] += arr_of_frequncy[i - 1];
-        arr_of_frequncy[i - 1] = 0;  // for beautiful dump (not necessarily)
-
-        Sort_After_Union (arr_of_frequncy, i);
-
-//        Print (arr_of_frequncy);
+        helper_arr_of_nodes[i] = Create_Node (letters[i], arr_of_frequncy[i]);
     }
 
-    return node;
+//    for (int i = 0; i < C_max_char; i++)
+//    {
+//        printf ("%d %d\n", arr_of_frequncy[i], helper_arr_of_nodes[i]->freq);
+//    }
+
+    for (int i = start + 1; i < C_max_char; i++)
+    {
+        node_t *node = Create_Node ('_', helper_arr_of_nodes[i]->freq + helper_arr_of_nodes[i - 1]->freq);
+        node->left  = helper_arr_of_nodes[i - 1];
+        node->right = helper_arr_of_nodes[i];
+
+        helper_arr_of_nodes[i] = node;
+
+        Sort_After_Union (helper_arr_of_nodes, letters, i);
+    }
+
+    return helper_arr_of_nodes[C_max_char - 1];
 }
 
 //=============================================================================
 
-void Sort_After_Union (int *arr_of_frequncy, const int index)
+void Sort_After_Union (node_t **helper_arr_of_nodes, unsigned char *letters, const int index)
 {
-    int val = arr_of_frequncy[index];
+    int val = helper_arr_of_nodes[index]->freq;
 
     for (int i = index + 1; i < C_max_char; i++)
     {
-        if (val > arr_of_frequncy[i])
+        if (val > helper_arr_of_nodes[i]->freq)
         {
-            int helper = arr_of_frequncy[i - 1];
-            arr_of_frequncy[i - 1] = arr_of_frequncy[i];
-            arr_of_frequncy[i] = helper;
+            int helper1 = helper_arr_of_nodes[i - 1]->freq;
+            helper_arr_of_nodes[i - 1]->freq = helper_arr_of_nodes[i]->freq;
+            helper_arr_of_nodes[i]->freq = helper1;
+
+            char helper2 = letters[i - 1];
+            letters[i - 1] = letters[i];
+            letters[i] = helper2;
         }
         else return;
     }
