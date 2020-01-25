@@ -112,6 +112,20 @@ void Print (int *arr_of_frequency)
     printf ("========================================\n");
 }
 
+void Print (node_t **arr)
+{
+    for (int i = 0; i < C_max_char; i++)
+    {
+        if (arr[i]->freq != 0)
+        {
+            printf ("%d ", arr[i]->freq);
+        }
+    }
+
+    printf ("\n");
+    printf ("========================================\n");
+}
+
 //=============================================================================
 
 void Dump_Dot (node_t* node)
@@ -300,20 +314,34 @@ node_t *Make_Tree (int *arr_of_frequncy, unsigned char *letters, const int cnt_o
 
 void Sort_After_Union (node_t **helper_arr_of_nodes, unsigned char *letters, const int index)
 {
+    printf ("1:\n");
+    Print (helper_arr_of_nodes);
+
     int val = helper_arr_of_nodes[index]->freq;
+    printf ("val = [%d]\n", val);
 
     for (int i = index + 1; i < C_max_char; i++)
     {
+        printf ("helper_arr_of_nodes[i]->freq = [%d]\n", helper_arr_of_nodes[i]->freq);
         if (val > helper_arr_of_nodes[i]->freq)
         {
-            int helper1 = helper_arr_of_nodes[i - 1]->freq;
-            helper_arr_of_nodes[i - 1]->freq = helper_arr_of_nodes[i]->freq;
-            helper_arr_of_nodes[i]->freq = helper1;
+            node_t *helper1 = helper_arr_of_nodes[i - 1];
+            helper_arr_of_nodes[i - 1] = helper_arr_of_nodes[i];
+            helper_arr_of_nodes[i] = helper1;
 
             char helper2 = letters[i - 1];
             letters[i - 1] = letters[i];
             letters[i] = helper2;
         }
-        else return;
+        else
+        {
+            printf ("2:\n");
+            Print (helper_arr_of_nodes);
+
+            return;
+        }
     }
+
+    printf ("2:\n");
+    Print (helper_arr_of_nodes);
 }
