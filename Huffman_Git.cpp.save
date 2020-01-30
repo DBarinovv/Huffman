@@ -256,11 +256,8 @@ void My_Swap (node_t **node1, node_t **node2)
     *node2 = helper1;
 }
 
-void My_Swap (unsigned char *elem1, unsigned char *elem2)
+void My_Swap (char *elem1, char *elem2)
 {
-    char helper2 = *elem1;
-    *elem1 = *elem2;
-    *elem2 = helper2;
 }
 
 //=============================================================================
@@ -375,9 +372,9 @@ void Insertion_Sort (node_t **helper_arr_of_nodes, unsigned char *letters, const
 //            helper_arr_of_nodes[i] = helper1;
 
             My_Swap (&letters[i - 1], &letters[i]);
-//            char helper2 = letters[i - 1];
-//            letters[i - 1] = letters[i];
-//            letters[i] = helper2;
+            char helper2 = letters[i - 1];
+            letters[i - 1] = letters[i];
+            letters[i] = helper2;
         }
     }
 }
