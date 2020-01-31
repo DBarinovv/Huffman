@@ -104,6 +104,8 @@ int main ()
 
 int Initialization_And_Make_Arrays (int *arr_of_frequency, unsigned char *letters)
 {
+    assert (letters);
+
     char *text = (char *) calloc (C_max_len, sizeof (char)); assert (text);
     scanf ("%s", text);
 
