@@ -118,7 +118,9 @@ int Find_Frequency (int *arr_of_frequency, const char *text)
 {
     int cnt_of_all_letters = 0;
 
-    for (int i = 0; i < strlen (text); i++)
+    const int len_of_text = strlen (text);
+
+    for (int i = 0; i < len_of_text; i++)
     {
         arr_of_frequency[text[i]]++;
         cnt_of_all_letters++;
@@ -168,7 +170,10 @@ void Dump_Dot (node_t* node)
     fprintf (fout, "{\n");
     fprintf (fout, "\"%p\" [label=\"%c\"]\n", node, node->data);
 
+    assert (node);
     Dump_Dot_Labels (node, fout);
+
+    assert (node);
     Dump_Dot_Links  (node, fout);
 
     fprintf (fout, "}");
@@ -180,6 +185,7 @@ void Dump_Dot (node_t* node)
 
 void Dump_Dot_Labels (node_t* node, FILE *fout)
 {
+    assert (node);
     if (node->left)
     {
         fprintf (fout, "\"%p\" [label=\"%c\"]\n", node->left, (node->left)->data);
@@ -187,6 +193,7 @@ void Dump_Dot_Labels (node_t* node, FILE *fout)
         Dump_Dot_Labels (node->left, fout);
     }
 
+    assert (node);
     if (node->right)
     {
         fprintf (fout, "\"%p\" [label=\"%c\"]\n", node->right, (node->right)->data);
@@ -199,12 +206,14 @@ void Dump_Dot_Labels (node_t* node, FILE *fout)
 
 void Dump_Dot_Links (node_t* node, FILE *fout)
 {
+    assert (node);
     if (node->left)
     {
         fprintf (fout, "\"%p\"->\"%p\";\n", node, node->left);
         Dump_Dot_Links (node->left, fout);
     }
 
+    assert (node);
     if (node->right)
     {
         fprintf (fout, "\"%p\"->\"%p\";\n", node, node->right);
@@ -216,6 +225,9 @@ void Dump_Dot_Links (node_t* node, FILE *fout)
 
 void Qsort (int *arr, int left, int right, unsigned char *letters)
 {
+    assert (arr);
+    assert (letters);
+
     if (right - left + 1 == 2)
     {
         if (arr[left] > arr[right])
@@ -240,6 +252,9 @@ void Qsort (int *arr, int left, int right, unsigned char *letters)
 
 void My_Swap (int *arr, const int left, const int right, unsigned char *letters)
 {
+    assert (arr);
+    assert (letters);
+
     int helper1 = arr[left];
     arr[left]   = arr[right];
     arr[right]  = helper1;
@@ -251,6 +266,9 @@ void My_Swap (int *arr, const int left, const int right, unsigned char *letters)
 
 void My_Swap (node_t **node1, node_t **node2)
 {
+    assert (node1);
+    assert (node2);
+
     node_t *helper1 = *node1;
     *node1 = *node2;
     *node2 = helper1;
@@ -258,6 +276,9 @@ void My_Swap (node_t **node1, node_t **node2)
 
 void My_Swap (unsigned char *elem1, unsigned char *elem2)
 {
+    assert (elem1);
+    assert (elem2);
+
     char helper2 = *elem1;
     *elem1 = *elem2;
     *elem2 = helper2;
@@ -267,6 +288,8 @@ void My_Swap (unsigned char *elem1, unsigned char *elem2)
 
 int Sort_For_Part (int *arr, int left, int right, int mid, unsigned char *letters)
 {
+    assert (letters);
+
     int res = mid;
 
     while (left < right)
@@ -328,6 +351,9 @@ node_t *Create_Node (const char letter, const int frequncy)
 
 node_t *Make_Tree (int *arr_of_frequncy, unsigned char *letters, const int cnt_of_all_letters)
 {
+    assert (arr_of_frequncy);
+    assert (letters);
+
     int start = -1;
     while (arr_of_frequncy[++start] == 0);
 
@@ -361,7 +387,8 @@ node_t *Make_Tree (int *arr_of_frequncy, unsigned char *letters, const int cnt_o
 
 void Insertion_Sort (node_t **helper_arr_of_nodes, unsigned char *letters, const int index)
 {
-    Print (helper_arr_of_nodes);
+    assert (helper_arr_of_nodes);
+    assert (letters);
 
     int val = helper_arr_of_nodes[index]->freq;
 
@@ -386,6 +413,9 @@ void Insertion_Sort (node_t **helper_arr_of_nodes, unsigned char *letters, const
 
 void Make_Codes (node_t *node, string *arr_of_codes, string way)
 {
+    assert (arr_of_codes);
+
+    assert (node);
     if (node->left != nullptr)
     {
     	way += '0';
@@ -395,6 +425,7 @@ void Make_Codes (node_t *node, string *arr_of_codes, string way)
     	way.pop_back();
     }
 
+    assert (node);
 	if (node->right != nullptr)
     {
     	way += '1';
