@@ -7,12 +7,14 @@
 #include <string.h>
 #include <assert.h>
 
+#include "TxLib.h"
+
 #include <string>
 #include <iostream>
 
 //=============================================================================
 
-const int C_max_len = 100;
+const int C_max_len  = 100;
 
 const int C_max_char = 256;  // 256 = 2 ** 8
 
@@ -32,9 +34,9 @@ struct node_t
 
 //=============================================================================
 
-int Initialization_And_Make_Arrays (int *arr_of_frequency, unsigned char *letters);
+const char *Initialization_And_Make_Arrays (int *arr_of_frequency, unsigned char *letters);
 
-int Find_Frequency (int *arr_of_frequency, const char *text);
+void Find_Frequency (int *arr_of_frequency, const char *text);
 
 void Print (int *arr_of_frequency);
 
@@ -58,7 +60,7 @@ int Sort_For_Part (int *arr, int left, int right, int mid, unsigned char *letter
 
 node_t *Create_Node (const char letters, const int frequncy);
 
-node_t *Make_Tree (int *arr_of_frequncy, unsigned char *letters, const int cnt_of_all_letters);
+node_t *Make_Tree (int *arr_of_frequncy, unsigned char *letters);
 
 void Insertion_Sort (node_t **helper_arr_of_nodes, unsigned char *letters, const int index);
 
@@ -68,15 +70,25 @@ void Make_Codes (node_t *node, string *arr_of_codes, string way);
 
 //=============================================================================
 
+void Make_Reverse_Arr (string *arr_of_codes, string *reverse_arr_of_codes);
+
+void Encode (string *arr_of_codes, const char *text);
+
+void Write_Bit (int bit, FILE *fout, bool if_end = false);
+
+unsigned long long int Reverse_Buffer (unsigned long long int buffer, const int len_of_buffer);
+
+//=============================================================================
+
 int main ()
 {
     int *arr_of_frequency = (int *) calloc (C_max_char, sizeof (int)); assert (arr_of_frequency);
     unsigned char *letters = (unsigned char *) calloc (C_max_char, sizeof (unsigned char)); assert (letters);
-    int cnt_of_all_letters = Initialization_And_Make_Arrays (arr_of_frequency, letters);
+    const char *text = Initialization_And_Make_Arrays (arr_of_frequency, letters);
 
     Qsort (arr_of_frequency, 0, C_max_char - 1, letters);
 
-    node_t *node = Make_Tree (arr_of_frequency, letters, cnt_of_all_letters); assert (node);
+    node_t *node = Make_Tree (arr_of_frequency, letters); assert (node);
     Dump_Dot (node);
 
     string arr_of_codes[C_max_char];
@@ -84,15 +96,30 @@ int main ()
 
     Make_Codes (node, arr_of_codes, "");
 
-    for (int i = 0; i < C_max_char; i++)
-    {
-        if (arr_of_codes[i] != "")
+        for (int i = 0; i < C_max_char; i++)
         {
-            printf ("(%c) = ", i);
-            std::cout << arr_of_codes[i];
-            printf ("\n");
+            if (arr_of_codes[i] != "")
+            {
+                printf ("(%c) = ", i);
+                std::cout << arr_of_codes[i];
+                printf ("\n");
+            }
         }
-    }
+
+//    string reverse_arr_of_codes[C_max_char];
+//    Make_Reverse_Arr (arr_of_codes, reverse_arr_of_codes);
+
+//    for (int i = 0; i < C_max_char; i++)
+//    {
+//        if (arr_of_codes[i] != "")
+//        {
+//            std::cout << arr_of_codes[i] << "  ---  ";
+//            std::cout << reverse_arr_of_codes[i] << "\n";
+//        }
+//    }
+
+//    Encode (reverse_arr_of_codes, text);
+    Encode (arr_of_codes, text);
 
     free (arr_of_frequency); arr_of_frequency = nullptr;
     free (letters);          letters          = nullptr;
@@ -102,34 +129,29 @@ int main ()
 
 //=============================================================================
 
-int Initialization_And_Make_Arrays (int *arr_of_frequency, unsigned char *letters)
+const char *Initialization_And_Make_Arrays (int *arr_of_frequency, unsigned char *letters)
 {
-    assert (letters);
-
     char *text = (char *) calloc (C_max_len, sizeof (char)); assert (text);
     scanf ("%s", text);
 
     for (int i = 0; i < C_max_char; i++) letters[i] = i;
 
-    return Find_Frequency (arr_of_frequency, text);
+    Find_Frequency (arr_of_frequency, text);
+
+    return text;
 }
 
 //=============================================================================
 
-int Find_Frequency (int *arr_of_frequency, const char *text)
+void Find_Frequency (int *arr_of_frequency, const char *text)
 {
-    int cnt_of_all_letters = 0;
-
     const int len_of_text = strlen (text);
 
     for (int i = 0; i < len_of_text; i++)
     {
         arr_of_frequency[text[i]]++;
-        cnt_of_all_letters++;
         printf ("text[%0.2d] = %c\n", i, text[i]);
     }
-
-    return cnt_of_all_letters;
 }
 
 //=============================================================================
@@ -351,7 +373,7 @@ node_t *Create_Node (const char letter, const int frequncy)
 
 //=============================================================================
 
-node_t *Make_Tree (int *arr_of_frequncy, unsigned char *letters, const int cnt_of_all_letters)
+node_t *Make_Tree (int *arr_of_frequncy, unsigned char *letters)
 {
     assert (arr_of_frequncy);
     assert (letters);
@@ -367,7 +389,7 @@ node_t *Make_Tree (int *arr_of_frequncy, unsigned char *letters, const int cnt_o
     }
 
 //    for (int i = 0; i < C_max_char; i++)
-//    {
+//    {Encode
 //        printf ("%d %d\n", arr_of_frequncy[i], helper_arr_of_nodes[i]->freq);
 //    }
 
@@ -438,4 +460,102 @@ void Make_Codes (node_t *node, string *arr_of_codes, string way)
     }
 
     arr_of_codes[node->data] = way;
+}
+
+//=============================================================================
+
+void Make_Reverse_Arr (string *arr_of_codes, string *reverse_arr_of_codes)
+{
+    for (int i = 0; i < C_max_char; i++)
+    {
+        reverse_arr_of_codes[i] = "";
+
+        string helper = arr_of_codes[i];
+
+        while (helper != "")
+        {
+            reverse_arr_of_codes[i].push_back (helper.back ());
+
+            helper.pop_back ();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+//void Encode (string *reverse_arr_of_codes, const char *text)
+void Encode (string *arr_of_codes, const char *text)
+{
+    FILE *fout = fopen ("output.txt", "w"); assert (fout);
+
+    const int len_of_text = strlen (text);
+    for (int i = 0; i < len_of_text; i++)
+    {
+        assert (arr_of_codes);
+        string helper = arr_of_codes[text[i]];
+
+        int len_of_str = helper.size ();
+        for (int k = 0; k < len_of_str; k++)
+        {
+            Write_Bit ((int) helper[k], fout);
+        }
+    }
+
+    Write_Bit (0, fout, 1);
+
+    fclose (fout);
+}
+
+//-----------------------------------------------------------------------------
+//                                BIT STREAM                                  ;
+//-----------------------------------------------------------------------------
+
+void Write_Bit (int bit, FILE *fout, bool if_end)
+{
+    if (if_end != 0)
+    {
+        // We have to do smth with end (len_of_text % 64 != 0)
+    }
+
+    static int cnt = 0;
+    static unsigned long long int buffer = 0;
+
+    buffer = (buffer << 1) | (bit & 1);
+    cnt++;
+
+    if (cnt == 64)
+    {
+//        for (int i = 0; i < cnt ; i++)
+//        {
+//            printf ("%d", (buffer >> i) & 1);
+//        }
+//        printf ("\n----------------------\n");
+
+        unsigned long long int rev_buffer = Reverse_Buffer (buffer, cnt);
+
+//        for (int i = 0; i < cnt ; i++)
+//        {
+//            printf ("%d", (rev_buffer >> i) & 1);
+//        }
+
+        assert (fout);
+        fprintf (fout, "llu", rev_buffer); // we write number or we have to write string?
+
+        cnt = 0;
+        buffer = 0;
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+unsigned long long int Reverse_Buffer (unsigned long long int buffer, const int len_of_buffer)
+{
+    unsigned long long int res = 0;
+
+    for (int i = 0; i < len_of_buffer; i++)
+    {
+        res = (res << 1) | ((buffer >> i) & 1);
+    }
+
+    return res;
 }
